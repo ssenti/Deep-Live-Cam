@@ -13,7 +13,12 @@ import shutil
 import argparse
 import torch
 import onnxruntime
-import tensorflow
+
+# Only import tensorflow on non-macOS systems
+if platform.system().lower() != 'darwin':
+    import tensorflow
+else:
+    tensorflow = None
 
 import modules.globals
 import modules.metadata
@@ -138,9 +143,10 @@ def suggest_execution_threads() -> int:
 
 def limit_resources() -> None:
     # prevent tensorflow memory leak
-    gpus = tensorflow.config.experimental.list_physical_devices('GPU')
-    for gpu in gpus:
-        tensorflow.config.experimental.set_memory_growth(gpu, True)
+    if tensorflow:
+        gpus = tensorflow.config.experimental.list_physical_devices('GPU')
+        for gpu in gpus:
+            tensorflow.config.experimental.set_memory_growth(gpu, True)
     # limit memory usage
     if modules.globals.max_memory:
         memory = modules.globals.max_memory * 1024 ** 3
